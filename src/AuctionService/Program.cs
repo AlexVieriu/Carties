@@ -9,10 +9,20 @@ builder.Services.AddDbContext<AuctionDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.UseAuthorization();
 app.MapControllers();
+
+try
+{
+    DbInitializer.InitDb(app);
+}
+catch (Exception e)
+{
+    WriteLine(e);
+}
 
 app.Run();

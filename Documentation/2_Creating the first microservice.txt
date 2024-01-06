@@ -216,13 +216,14 @@ context.AddRange(auctions)
 
 get the List of Actions from here 
 ii "D:\Programare\Proiecte\Micro with NextJS\CourseAssets\snippets\auctionsSeed.txt"
-dotnet ef database drop 
-dotnet ef database update
-dotnet watch 
 
 -- Program.cs -- 
 DbInitializer.InitDb(app);
 app.Run();
+
+dotnet ef database drop 
+dotnet ef database update
+dotnet watch 
 
 14. Shaping the data to return
 !!! de intrat mai adanc in AutoMapper !!
