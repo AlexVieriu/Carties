@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "dgSpecHash": "JtA//cBEL5pX1o376/zMoefKk4T2K1Ajz5oQafY267TSOWJUqw2qrafQIXjSaBC5D0o6ZsXMb1re3jZATHyAGw==",
+  "success": true,
+  "projectFilePath": "D:\\Programare\\Proiecte\\Micro with NextJS\\Main Project\\Carties\\src\\AuctionService\\AuctionService.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\vieri\\.nuget\\packages\\microsoft.extensions.apidescription.server\\6.0.5\\microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",
+    "C:\\Users\\vieri\\.nuget\\packages\\microsoft.openapi\\1.2.3\\microsoft.openapi.1.2.3.nupkg.sha512",
+    "C:\\Users\\vieri\\.nuget\\packages\\swashbuckle.aspnetcore\\6.4.0\\swashbuckle.aspnetcore.6.4.0.nupkg.sha512",
+    "C:\\Users\\vieri\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\6.4.0\\swashbuckle.aspnetcore.swagger.6.4.0.nupkg.sha512",
+    "C:\\Users\\vieri\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\6.4.0\\swashbuckle.aspnetcore.swaggergen.6.4.0.nupkg.sha512",
+    "C:\\Users\\vieri\\.nuget\\packages\\swashbuckle.aspnetcore.swaggerui\\6.4.0\\swashbuckle.aspnetcore.swaggerui.6.4.0.nupkg.sha512"
+  ],
+  "logs": []
+}

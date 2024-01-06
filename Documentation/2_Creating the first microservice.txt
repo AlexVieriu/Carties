@@ -6,10 +6,14 @@
 -> using Docker compose
 -> using Postman to test the API
 
-7_.png
+-> big picture architecture (pic 7)
 
 Open the documentation
 ii 'D:\Programare\Proiecte\Micro with NextJS\CourseAssets\specs\auctionSvcSpec.pdf'
+
+-> install a PDF extension reader 
+-> in this PDF we will have all the specification, classes, nuget Packages etc.
+Documentation\CourseAssets\specs\auctionSvcSpec.pdf
 
 
 8. Creating the first microservice
@@ -19,14 +23,14 @@ https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspne
 mkdir Carsties
 cd Carsties
 dotnet --info
-dotnet new list
+dotnet new list (types of projects of .net)
 dotnet new sln
 ls
 dotnet new webapi --use-controllers -o src/AuctionService (error, could't find package OpenAPI 8.0 RC2 -> Nearest version: 8.0.0-rc.1.23421.29)
 ls
 ls src
 dotnet sln add src/AuctionService (add project to the solution)
-code .
+code ./src/AuctionService         (open the project)
 
 
 9. Reviewing and simplifying the project
