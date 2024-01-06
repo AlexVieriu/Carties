@@ -1,0 +1,308 @@
+22. Section 3
+-> create a Search Service
+-> adding MongoDB
+-> sync communication between Services
+
+23. Creating the second microservice
+-> we don't share DBs between microservices !!!
+
+Documentation 
+ii "D:\Programare\Proiecte\Micro with NextJS\CourseAssets\specs\searchSvcSpec.pdf"
+
+cd "D:\Programare\Proiecte\Micro with NextJS\Main Project\Carsties"
+dotnet new webapi --use-controllers -o src/SearchService
+dotnet sln add src/SearchService
+
+-- Program.cs --
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllers();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+app.MapControllers();
+
+app.Run();
+
+
+-- launchSettings.json --
+{
+  "$schema": "http://json.schemastore.org/launchsettings.json",  
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:7002",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }        
+  }
+}
+
+-- appsettings.json -- 
+"Microsoft.AspNetCore": "Information"
+
+-- SearchService.csproj -- 
+-> delete Swagger package 
+-> <Nullable>disable</Nullable>
+
+-> delete the WeatherForecast Controller
+
+Adding packages
+ctrl + shift + p -> Nuget Gallery
+MongoDB.Entities
+AutoMapper.Extensions.Microsoft.DependencyInjection
+
+cd SearchService
+dotnet build
+dotnet watch
+ctrl + C
+
+
+24. Adding the MongoDB server 
+
+-> add mongo db container
+https://hub.docker.com/_/mongo
+
+-- Carsties -> docker-compose.yml --
+services:
+  postgres:
+    image: postgres:alpine
+    environment:
+      POSTGRES_PASSWORD: postgrespw
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  mongodb:
+    image: mongo
+    environment: 
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mongopw
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodata:/var/lib/mongodb/data 
+
+volumes:
+  pgdata:
+  mongodata:
+
+
+ii . 
+cd "D:\Programare\Proiecte\Micro with NextJS\Main Project\Carsties"
+docker compose up -d
+
+- add MongoDb for VS Code extension 
+- connect to Mongo -> Advanced Connection Settings
+username: root
+pass    : mongopw
+
+
+Extra knowledge from Udemy questions:
+-> multiple volumes on a Docker container
+https://www.baeldung.com/ops/docker-mounting-multiple-volumes#:~:text=Docker%20has%20multiple%20options%20to,bind%20them%20to%20specific%20paths.
+
+
+25. Adding the Item model
+
+Models-> Item.cs -> copy class AuctionService-> AuctionDto.cs(without the id)
+
+
+26. Adding seed data
+Postman -> Auctions -> GetAllAuctions -> 
+  -> open docker -> start the project AuctionService(dotnet watch)
+  -> send the request -> copy all JSON result
+
+-- SearchService -> Data -- 
+Auctions.json (paste the JSON)
+DbInitializer.cs
+  -> create a static methods InitDB(WebApplication app)
+  -> create the connection to the MongoDB 
+  -> add key definition for the idex Item class
+  -> both methods are await
+
+-- Program.cs --
+await DbInitializer.InitDb(app);
+
+DB            -> the main entrypoint for all data access methods of the library
+.InitAsync()  -> initializes a MongoDB connection with the given connection parameters
+.Index<T>()   -> represents a index for a given IEntity
+.Key()        -> add a key definition for the index
+
+File.ReadAllTextAsync(" . . . ")
+-> Asynchronously opens a text file, reads all the text in the file, and then closes
+  the file
+
+new JsonSerializerOptions { PropertyNameCaseInsensitive = true }; 
+-> Gets or sets a value that indicates whether a property's name 
+uses a case-insensitive comparison during deserialization
+-> the default value is false
+
+ChatGPT:
+"I have a C# line of code: "var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };" . What PropertyNameCaseInsensitive  does? give and example"
+
+By default, if you try to deserialize this JSON into a Person object 
+using JsonSerializer, the property names in the JSON must exactly 
+match the property names in the C# class (case-sensitive) 
+
+
+Modify Snippets -> ctrl + shift + p -> Configure User Snippets -> C#
+	"Console Writeline":{
+		"prefix":["cw"],
+		"body": ["WriteLine($1);"],
+		"description": "System.Console.WriteLine()"
+	}
+
+
+27. Adding a search controller
+
+https://mongodb-entities.com/wiki/Entities.html
+
+-- Controllers -> Search.cs --
+-> create a SearchItems actionResult
+  -> query the items form DB.
+  -> sort by Make field
+  -> .ExecuteAsync() the query
+  -> return the results
+
+Open Postman
+-> Microservices NextJS -> Variables
+  - variable: searchApi
+  - initial value: http://localhost:7002 
+  - current value: http://localhost:7002 
+
+open docker
+start containers
+dotnet watch
+create a new get request from postman: {{searchApi}}/api/search
+
+-- SearchController.cs --
+if (!string.IsNullOrEmpty(searchTerm))
+{
+    query.Match(Search.Full, searchTerm).SortByTextScore();
+}
+
+Match()     -> allows you to filter documents from a collection based on a specified condition
+Search.Full -> represents a full-text search
+            -> allows you to search for words or phrases in the entire text of a document, rather than just in specific fields
+SortByTextScore() ->  The relevance score of a document is calculated based on how many times the search term appears in the 
+                  document and how close the search term is to the beginning of the document.           
+
+Postman:
+-> create a GET method searching by filter
+-> {{searchApi}}/api/search?searchTerm=Mustang
+
+
+28. Paginating the results 
+
+-- SearchController.cs --
+-> add to SearchItems() pageNumber, pageSize(give them some default values)
+-> change method DB.Find to DB.PageSearch
+-> add pageNumber to query
+-> add pageSize to query
+-> execute the query so we can get all the data with pagination
+-> return the results, pageCount, pageTotalCount to the Client
+-> start docker and test the project with postman
+
+Add 3 more Get All request in Postman:
+-> with no parameters          : {{searchApi}}/api/search?pageNumber=2&pageSize=10
+-> with pageSize and pageNumber: {{searchApi}}/api/search
+
+
+29. Adding filtering and ordering 
+
+-- RequestHelpers -> SearchParams.cs --
+-> add prop : SearchTerm, PageNumber, PageSize, Seller, Winner, OrderBy, FilterBy
+-> we are creating a class that is responsible for all the filters we apply on the page
+
+-- SearchController.cs --
+-> change the params with object: SearchParams.cs
+-> use [FromQuery] 
+
+-> add the:
+  query = searchParams.OrderBy switch ...
+  query = searchParams.FilterBy switch ...
+  !string.IsNullOrEmpty(searchParams.Seller) ...
+  !string.IsNullOrEmpty(searchParams.Winner) ...
+
+-> Get all items With Test as Seller
+{{searchApi}}/api/search?seller=bob
+{{searchApi}}/api/search?winner=bob
+{{searchApi}}/api/search?filterBy=finished
+
+
+30. Synchronous messaging 
+
+31. Adding Http communication to get the data
+
+-- ActionService -> Controller -> AuctionsController.cs --
+-> we are changing the code
+
+public async Task<ActionResult<List<AuctionDto>>> GetAllAuctions(string date)
+    {
+        var query = _context.Auctions.OrderBy(x => x.Item.Make).AsQueryable();
+
+        if (!string.IsNullOrEmpty(date))
+        {
+            query = query.Where(x => x.UpdateAt.CompareTo(DateTime.Parse(date).ToUniversalTime()) > 0);
+        }
+
+        return await query.ProjectTo<AuctionDto>(_mapper.ConfigurationProvider).ToListAsync();
+    }
+
+Test it:
+-> Postman -> Section 2 -> Get all Auctions
+
+cd ../SearchService
+-- SearchService -> Services -> AuctionSvcHttpClient.cs --
+
+-- SearchService -> appsettings.Development --
+"AuctionServiceUrl":"http://localhost:7001"
+
+-- DbInitializer.cs --
+-> make the changes
+
+
+delete the MongoDB container
+docker compose up -d
+docker volume list
+docker volume rm 01fb53
+start the AuctionService
+start the SearchService
+
+
+32. Making our Http communication resilient
+docker compose down
+docker compose up -d
+
+ctrl+shift+p -> Nuget gallery -> Microsoft.Extensions.Http.Polly
+
+-- SearchService -> Program.cs --
+builder.Services.AddHttpClient<AuctionSvcHttpClient>().AddPolicyHandler(GetPolicy());
+
+app.Lifetime.ApplicationStarted.Register(async () =>
+{
+    await DbInitializer.InitDb(app);
+});
+
+static IAsyncPolicy<HttpResponseMessage> GetPolicy()
+    => HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+        .WaitAndRetryForeverAsync(_ => TimeSpan.FromSeconds(3));
+
+-> AuctionService must be stop
+-> start the SearchService
+-> dotnet watch (the service will try to call the AuctionService)
+-> start the AuctionService
+-> all is good now  
+
+33. Summary 
+-> Creating a Search Service
+-> Adding MongoDb
+-> Sync communication between Services 

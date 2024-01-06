@@ -1,0 +1,59 @@
+2. Course pre-requisites
+
+Source code:
+https://github.com/trycatchlearn/carsties 
+-> in the repo we have the steps for running the apps
+
+
+3. Setting up the developer environment
+
+https://code.visualstudio.com/
+https://docs.docker.com/desktop/install/windows-install/
+https://nodejs.org/en/download/current
+https://dotnet.microsoft.com/en-us/download/dotnet
+https://www.postman.com/downloads/
+https://git-scm.com/downloads 
+
+
+4. Course assets and source code  
+
+-> copy the repo to the local 
+
+Open Visual Sudio Code:
+CTL + ~ (to open the terminal)
+cd "D:\Programare\Proiecte\Micro with NextJS\Udemy Project" (where i want the project to be)
+git clone https://github.com/TryCatchLearn/Carsties.git
+cd Carsties
+git log
+git log --all --decorate --oneline --graph 	(press Q to exit the logs in terminal)
+git checkout 5b3f518				(getting to the branch 5b3f518)		
+git checkout main				(getting to the branch main)
+git config --global alias.adog "log --all --decorate --oneline --graph" (get an alias for the command)
+git adog
+
+
+5. VSC troubleshooting and tips
+
+-- Extensions --
+powershell -> ii "D:\Programare\Proiecte\Micro with NextJS\CourseAssets\specs\vscode.pdf" (open specific folder)
+C# extensions -> create class 
+
+-- Problems --
+-> if we don't see the definition of the class -> ctrl+shift+p -> Developer: Reload Windows
+-> output -> change from the write dropdown list: C#, C# dev kit, .Net Runtime
+
+
+6. Microservices - the big picture
+
+Advantages
+-> loosely coupled services
+-> for large scale app
+-> for large teams
+-> each microservice is responsible for own data
+-> use gRPC for intern communication
+-> if we lost service A, service B can still be called  
+-> we can deploy the service often, independent from other services
+
+Disadvantages
+-> has multiple DBs that need to be managed
+-> the cost is high

@@ -1,0 +1,443 @@
+48. Introduction to Section 5
+-> creating an IdentityServer project
+-> customizing IdentityServer for our needs
+-> adding authentication to our API endpoints
+-> OpenID Connect and OAuth 2.0
+
+What is IdentityServer?
+-> authentication Server
+-> implements OpenID Connect(OIDC) and OAuth 2.0
+-> designed to be a customizable solution
+-> no longer open source (license required in prod)
+-> single sign on solution
+48_.png
+
+Other alternatives:
+-> using a cloud service like Azure ID Connect
+-> put the authentication in Getaway
+
+49. OAuth and OpenIdConnect
+
+OAuth 2.0
+-> a security standard where we give one app permission to access our data in another app
+-> instead of giving them a UserName and Pass, we give them a key that give the 
+app permission to access our app, our data, or do things on our behalf in another app
+-> the steps taken ot grant permission is referred to as authorization
+-> we authorize one app to access our data or use features in another app on our behalf without
+ actually giving them our Pass
+ -> and we can take that key back when we want to
+
+Authorization Server
+    -> IdentityServer
+    -> Facebook login
+    -> Apple login
+    -> Google login 
+
+-- THE FLOW --
+-> our user click on the Login button 
+-> that user is redirected to a Login Page on Identity Server(IS)
+-> the IS checks if they are already login in
+-> IS will give the Client app a KEY, so our Client app, on behalf of our user
+can login
+
+
+-- Terminology --
+
+Resource Owner
+-> we are the owner of our identity, our data, and any actions 
+that can be performed with our account
+
+Client
+-> is tha app that want to access data that perform action on behalf of us, 
+the Resource Owner
+-> after we lodged into the IS, our client well been given a key, so can go 
+to authenticate to our other services 
+
+We have an:
+    -> Authorization Server(IdentityServer, Facebook login, Google login . . .)
+    -> Resource Server (AuctionService, SearchService, . . .)
+    -> Redirect URI (https://app.carsties.com/callback)
+        -> the URL
+        -> the auth server(IS) will redirect the resource owner back, 
+        after granting permission to the client callback URL
+    -> Response Type
+        -> this is the type of information the client is expecting to receive        
+        -> the most common response type is code, where the client expects
+        an authorization code from authorization server
+    -> Scope
+        -> permissions that the Client wants:
+            -> Read Auctions
+            -> Read Profile
+    -> Consent 
+        -> a UI text box that allows the Client app to access private information
+        "Do you want to allow Carsties to access your profile, email etc?
+            Allow/Deny
+    -> ClientId    
+        -> identify the client with the auth Server(IS- Identity Server)  
+        -> ex:  NextJSApp (ABCD123)
+                Postman (DEF2345)
+    -> Client Secrets
+        -> allows to securely share information privately behind the scenes
+    -> Authorization Code
+        -> a short leaved temporary code that the authorization server, 
+        Identity Server(IS), sends back to the Client
+        -> the Client then sends the auth code back to the auth server along 
+        with the client secret in exchange for an access token
+        -> the access token is the key the client will use to communicate with 
+        the resource server 
+        -> this is like a key card that gives the client permission to request data 
+        or perform actions with the resource server on your behalf as the resource owner
+
+The  OAuth 2.0 Flow (for Authorization)  
+Step 1&2:   
+-> we want the client to access some information about you that is contained 
+on the authorization server(IS)
+-> we use IS to store our user accounts 
+-> the Client redirects our browser to the authorization Server(IS), that includes
+with the request the client ID, the redirect URL, the response type, and one or more
+scopes that it needs 
+Step 3:
+-> the authorization server then verifies who you are and if necessary, 
+prompts for a login(like a facebook)
+Step 4(not implemented in this course):
+-> possibly you would have a consent form based on the scopes request by the client 
+and the resource owner can grant/deny permission based on what the app is asking for
+Step 5:
+-> the temporary authorization code is then passed to the users browser, which 
+which then calls, using the redirect URL to the client app server
+Step 6&7:
+-> the client contacts the authorization server directly
+-> it doesn't use the resource owners browser 
+-> it securely sends its client ID and its client secret along with the authorization
+code to the authorization server 
+-> the authorization server will response with the access token, which is not 
+returned to the users browser, it is retained on the app server -> 
+the client app server, not the users browser, as it will not be used by the user's 
+browser directly  
+Step 8:
+-> the client sends a request to the AuctionService, with the token, and asking for
+data(ex: list of Auctions)
+-> the AuctionService validate the token and if is valid, gives the data to the Client
+-> before this is done, the IS establish a relationship with the client
+-> the authorization server generates client ID and client secret and gives them 
+to the client to use for all future auth servers 
+-> this secret must be kept secret, only the app and the authorization server know 
+what this is 
+
+OpenID Connect(for Authentication) (9:00)
+-> enables a client to establish a login sessions as well as to gain info about 
+the person logged in what is often referred to as identity
+-> when a authorization server supports OpenID Connect, is often referred as an identity 
+provider since it provides information about the resource owner that's you, the user, 
+back to the client, which is the server running our client app  
+
+
+50. Creating the Identity Server project 
+https://duendesoftware.com/products/communityedition
+https://docs.duendesoftware.com/identityserver/v6/quickstarts/0_overview/
+
+(2:10)
+-> Identity Server doesn't have supp for storing users, but has supp
+for storing ASP.NET identity and EntityFramework base configuration, that 
+create tables and store users for us 
+
+-- Carsties -
+dotnet new --install Duende.IdentityServer.Templates
+
+Create a project:
+dotnet new isaspid -o src/IdentityService
+no
+cd ../../
+dotnet sln add src/IdentityService
+
+
+51. Reviewing and configuring our new project 
+-- IdentityService --
+-> the identity will come with the .net 6 packages
+-> update to the latest version(.net 7)
+
+-- launchSettings.json --
+"applicationUrl": "http://localhost:5000"
+cd src/IdentityService
+
+-- HostingExtension.cs --
+comment this line:
+    // options.EmitStaticAudienceClaim = true;
+remove the GoogleAuth:
+    builder.Services.AddAuthentication();
+
+52. Seeding data and adding a migration 
+
+-- SeedData.cs --
+
+-> check if there are users in the DB
+if(userMgr.Users.Any())
+    return;
+
+-> removing other fields:
+
+result = userMgr.AddClaimsAsync(alice, new Claim[]{
+    new Claim(JwtClaimTypes.Name, "Alice Smith")
+}).Result;
+
+result = userMgr.AddClaimsAsync(bob, new Claim[]{
+    new Claim(JwtClaimTypes.Name, "Bob Smith")
+}).Result;
+
+(6:22)
+-- Program.cs --
+-> delete the seed data that it is in the code and replace it with 
+SeedData.EnsureSeedData(app);
+
+-> install .net ef tool (run it at the solution LVL -> Carsties)
+dotnet tool list -g
+dotnet tool uninstall dotnet-ef -g (-g is for global)
+dotnet tool install dotnet-ef -g --version 8.0.0-rc.2.23480.1
+dotnet tool install dotnet-ef -g (-g is for global, the last stable release)
+dotnet tool update dotnet-ef -g
+
+-> delete all the migrations
+dotnet ef migrations add "InitialCreate" -o Data/Migrations
+
+-- HostingExtension.cs --
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
+-> it is used for http
+
+-- Dictionary --
+SameSiteMode: 
+sed to set the SameSite field on response cookies to indicate if those cookies
+should be included by the client on future "same-site" or "cross-site" requests
+
+Lax:
+Indicates the client should send the cookie with "same-site" requests, and with
+"cross-site" top-level navigations
+
+-- IdentityService -> appsettings.json
+Server=localhost:5432;User Id=postgres;Password=postgrespw;Database=Auctions
+
+-- HostingExtensions.cs --
+builder.Services.AddDbContext<ApplicationDbContext>(opt =>
+{
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+-> if we played with updating the framework, delete the migrations
+ then put them back
+dotnet ef migrations add "InitialCreate" -o Data/Migrations
+
+-> run the program
+
+On the page that is opened:
+-> go to Claims
+User: bob
+Pass: Pass123$
+
+
+53. Reviewing the login page in identity server
+
+54-56. Adding a register page
+
+-- Register -> Index.cshtml --
+@page
+@model IdentityService.Pages.Account.Register.Index
+<div>
+    <partial name="_ValidationSummary"/>
+
+    <div class="row">
+        <div class="col-6 offset-3"></div>
+        <div class="card">
+            <div class="card-header">
+                <h2>Register</h2>
+            </div>
+            <div class="card-body">
+                Form goes here
+            </div>
+        </div>
+    </div>
+</div>
+
+
+-- Login -> Index.cshtml
+<a class="pb-2 d-block" asp-page="../Register/Index" asp-route-returnUrl="@Model.Input.ReturnUrl">New User? Register here</a>
+
+-- IdentityService.Page.Register -> RegisterViewModel.cs --
+Email, Password, UserName, FullName, ReturnUrl, Button
+
+-- IdentityService.Page.Register-> Index.cshtml.cs--
+[SecurityHeaders]
+[AllowAnonymous]
+OnGet()
+OnPost()
+
+-- Register -> Index.cshtml --
+-> copy the form from the Login-> Idex.cshtml
+
+57. Adding client credentials to allow clients to request token
+
+For using Postman:
+https://docs.duendesoftware.com/identityserver/v6/tokens/password_grant/
+
+POST /token HTTP/1.1
+Host: demo.duendesoftware.com
+Content-Type: application/x-www-form-urlencoded
+
+client_id=client&
+client_secret=secret&
+grant_type=password&
+username=bob&
+password=password
+
+-- IdentityService -> Config.cs --
+-> delete all the ApiScore and add this one
+new ApiScope[]
+{
+    new ApiScope("auctionApp", "Auction app full access")
+};
+
+-> delete all the Client classes and add this
+new Client{
+    ClientId = "postman",
+    ClientName = "Postman",
+    AllowedScopes  = {"openid", "profile", "auctionApp"},
+    RedirectUris = {"https://www.getpostman.com/ouath2/callback"},
+    ClientSecrets = new [] {new Secret("NotASecret".Sha256())}, 
+    AllowedGrantTypes = {GrantType.ResourceOwnerPassword}
+}
+
+-> test it in Postman
+GetBobToken - POST : 
+x-www-form-urlencoded
+-> grant-type   : password
+-> username     : bob
+-> password     : Pass123$
+-> client_id    : postman   
+-> client_secret: NotASecret
+-> scopes       : auctionApp openid profile
+
+GetTomToken - POST
+GetAliceToken - POST
+Get User Info - GET
+Create new Auction no auth - POST
+Create new Auction as Alice - POST
+Update the created auction as Bob - PUT
+Update the created auction as Alice - PUT
+Delete Auction as Alice - DEL
+
+-> add tests for each endpoint
+
+58. Adding a Custom profile service to identity server
+
+-- Services -> CustomProfileService.cs
+
+GetProfileDataAsync()
+-> this method is called whenever claims about the user are 
+ requested (e.g. duringtoken creation or via the userinfo endpoint) 
+
+
+ -- HostingExtensions.cs -- 
+.AddProfileService<CustomProfileService>();
+
+-> run GetBobToken from Postman
+-> copy the token and paste it in: https://jwt.io/
+
+59. Configuring auth on the resource server
+CTRL + P -> nuget -> jwtbearer
+Microsoft.AspNetCore.Authentication.JwtBearer
+
+-- Program.cs --
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(opt =>
+    {
+        opt.Authority = builder.Configuration["IdentityServiceUrl"];
+        opt.RequireHttpsMetadata = false;
+        opt.TokenValidationParameters.ValidateAudience = false;
+        opt.TokenValidationParameters.NameClaimType = "username";
+    });
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+-- appsettings.Development.json --
+"IdentityServerUrl":"http://localhost:5000"
+
+Dictionary:
+-> .Authority
+    -> gets or sets the Authority to use when making OpenIdConnect calls
+-> .RequireHttpsMetadata    
+    -> gets or sets if HTTPS is required for the metadata address or authority 
+    the default is true
+    this should be disabled only in development environments
+
+
+60. Configuration the auth endpoints on the resource server
+
+-- AuctionsController.cs --  
+Post endpoint:
+[Authorize]
+auction.seller = User.Identity.Name
+
+Put endpoint:
+[Authorize]
+if (auction.Seller != User.Identity.Name)
+    return Forbid();
+
+Delete endpoint:
+[Authorize]
+if (auction.Seller != User.Identity.Name)
+    return Forbid();    
+
+-> make sure AuctionService is targeting .net 7, till MassTransit is supporting .net 8
+https://www.nuget.org/packages?q=MassTransit.EntityFrameworkCore
+
+-> run the app  
+-> got to Postman
+
+-> get a token for Bob, Alice, Tom  (POST)      
+    -> {{identitySvc}}/connect/token
+    -> Key: grant_type, username, password, client_id, client_secret, scope
+    -> Tests: 
+        var response = pm.response.json();
+        pm.collectionVariables.set("AliceToken", response.access_token);
+
+-> get User info (GET)
+http://localhost:5000/connect/userinfo
+Authorization: {{BobToken}}
+
+-> create new Auction with (POST)
+    -> no Authentication
+        -> {{auctionApi}}/api/auctions
+        -> Body
+        -> Pre-request Script with {{dateString}}
+        -> Tests 
+            -> "Status code is 401" - Forbidden
+    -> as Alice
+        -> {{auctionApi}}/api/auctions
+        -> Authorization: {{AliceToken}}
+        -> Body
+        -> Pre-request Script with {{dateString}}
+        -> Tests 
+            -> "Status code is 401" - Forbidden
+            -> expect property "seller"
+            -> seller need to be = 'alice'
+            -> set id = "createdItemId"
+
+-> get User info (GET)
+    -> http://localhost:5000/connect/userinfo
+    -> authorization 
+
+-> update Auction as (PUT)
+    -> Alice, Bob
+    -> Authorize: {{BobToken}}, {{AliceToken}}    
+    -> Body
+    -> Status code 
+        -> Bob  : 403
+        -> Alice: 200    
+
+-> delete Auction as Alice
+    -> {{auctionApi}}/api/auctions/{{createdItemId}}
+    -> authorization      
+                

@@ -1,0 +1,238 @@
+62. Introduction to Section 6
+Other options:
+-> YARP ( yet another reverse proxy)
+-> OCELOT
+
+What is a reverse Proxy?
+client -> server Proxy -> internet -> Reverse Proxy Server-> servers
+
+Do we need one?
+-> very typical in Micro Services
+-> single surface area for requests
+-> client unaware of any internal services
+-> security (we can auth at the gateway)
+-> SSL termination(we don't use it in the course)
+-> URL rewriting
+-> load balancing
+-> caching
+
+63. Adding the Gateway service 
+dotnet new web -o src/GatewayService
+dotnet sln add src/GatewayService
+
+-- GatewayService.csproj -- 
+disable nullable
+
+-- launchSettings.json --
+-> only keep http profile
+-> http://localhost:6001
+
+-- appsettings.Development.json --
+"Microsoft.AspNetCore": "Information"
+
+NugetPackages:
+Microsoft.AspNetCore.Authentication.JwtBearer
+Yarp.ReverseProxy
+
+-- Program.cs --
+builder.Services.AddReverseProxy()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+app.MapReverseProxy();
+
+
+64. Adding the Reverse Proxy configuration
+https://microsoft.github.io/reverse-proxy/articles/config-files.html
+-> Configuration Structure (paragraph)
+
+
+65. Adding authentication to the Gateway config 
+https://microsoft.github.io/reverse-proxy/articles/authn-authz.html
+
+-- Programs.cs -- 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(opt =>
+    {
+        opt.Authority = builder.Configuration["IdentityServerUrl"];
+        opt.RequireHttpsMetadata = false;
+        opt.TokenValidationParameters.ValidateAudience = false;
+        opt.TokenValidationParameters.NameClaimType = "username";
+    });
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+
+66. Testing our Gateway service in Postman
+
+Start multiple projects at once:
+https://dev.to/this-is-learning/debugging-multiple-net-projects-in-vs-code-28kn
+
+cd src/AuctionService 
+cd src/SearchService
+cd src/IdentityService
+cd src/GatewayService
+
+Postman:
+GetBobToken (Post)
+    -> {{identitySvc}}/connect/token
+    -> x-www-form-urlencoded
+    -> Test:
+        -> get the token into BobToken variable
+GetAliceToken (Token)
+    -> {{identitySvc}}/connect/token
+    -> x-www-form-urlencoded
+    -> Test:
+        -> get the token into AliceToken variable
+Get all items (Get)
+    -> {{gateway}}/search
+    -> Test:
+        -> status code 200
+        -> required fields: results, pageCount, totalCount
+Get all cars with name Ford (Get)
+    -> {{gateway}}/search
+    -> Test:
+        -> status code 200
+        -> field "make" = Ford
+        -> required fields: results, pageCount, totalCount
+Create new Auction as Alice (Post)
+    -> {{gateway}}/auctions
+    -> authorization
+    -> body
+    -> pre-request
+    -> Tests:
+        -> status code 201
+        -> have field "seller"
+        -> seller = alice
+        -> put new Id into Postman variable "createdItemId"
+Get Item by Id (Get)
+    -> {{gateway}}/auctions/{{createdItemId}}
+    -> pre-request Script: timeout 1000
+    -> Tests:
+        -> status code 200
+        -> make = "Ford, model = "Escort"
+Update the create action as Bob (Put)
+    -> {{gateway}}/auctions/{{createdItemId}}
+    -> authorization
+    -> Tests:
+        -> status code 200 
+Update the created auction as Alice (Put)
+    -> {{gateway}}/auctions/{{createdItemId}}
+    -> authorization
+    -> Tests:
+        -> status code 200  
+   
+Get Updated item by id
+    -> Pre-request Script: timeout 1000
+    -> Tests:
+        -> status code 200 
+        -> make = Ford Update, model = Updated  
+Delete Auction as Alice
+    -> {{gateway}}/auctions/{{createdItemId}}
+    -> authorization
+    -> Tests:
+        -> status code 200
+Get Deleted Item return 404
+    -> {{gateway}}/auctions/{{createdItemId}}
+    -> pre-request: timeout 1000
+    -> Tests:
+        -> status code 404 - not found  
+
+67. Adding the remaining contracts we need 
+
+-- Contracts --
+AuctionFinished.cs: 
+    -> ItemSold, AuctionId, Winner, Seller, Amount
+BidPlaced.cs:
+    -> Id, AuctionId, Bidder, BidTime, Amount, BidStatus
+
+-- AuctionService -> Consumer --
+AuctionFinishedConsumer.cs:
+    -> inherit IConsumer<AuctionFinished>
+    -> add AuctionDbContext to the ctor
+    public async Task Consume(ConsumeContext<AuctionFinished> context)
+    {   
+        var auction = await _dbcontext.Auctions.FindAsync(context.Message.AuctionId);
+        if (context.Message.ItemSold)
+        {
+            auction.Winner = context.Message.Winner;
+            auction.SoldAmount = context.Message.Amount;
+        }
+
+        auction.Status = auction.SoldAmount > auction.ReservePrice
+            ? Status.Finished : Status.ReserveNotMet;
+
+        await _dbcontext.SaveChangesAsync();
+    }
+
+BidPlacedConsumer.cs:
+    -> inherit IConsumer<AuctionFinished>
+    -> add AuctionDbContext to the ctor
+public async Task Consume(ConsumeContext<BidPlaced> context)
+{
+    WriteLine("--> Consuming bid placed event");
+
+    var auction = await _dbContext.Auctions.FindAsync(context.Message.AuctionId);
+
+    if (auction.CurrentHighBid == null || 
+        context.Message.BidStatus.Contains("Accepted") && 
+        context.Message.Amount < auction.CurrentHighBid)
+    {
+        auction.CurrentHighBid = context.Message.Amount;
+        await _dbContext.SaveChangesAsync();
+    }
+}
+
+69_Adding consumers in the SearchService
+
+-- SearchService -> Consumers --
+BidPlacedConsumer.cs:
+public class BidPlacedConsumer : IConsumer<BidPlaced>
+{
+    public async Task Consume(ConsumeContext<BidPlaced> context)
+    {
+        WriteLine("--> Consuming bid placed event");
+
+        var auction = await DB.Find<Item>().OneAsync(context.Message.AuctionId);
+
+        if (context.Message.BidStatus.Contains("Accepted") &&
+            context.Message.Amount < auction.CurrentHighBid)
+        {
+            auction.CurrentHighBid = context.Message.Amount;
+            await auction.SaveAsync();
+        }
+    }
+}
+
+AuctionFinishedConsumer.cs:
+public class AuctionFinishedConsumer : IConsumer<AuctionFinished>
+{
+    public async Task Consume(ConsumeContext<AuctionFinished> context)
+    {
+        var auction = await DB.Find<Item>().OneAsync(context.Message.AuctionId);
+
+        if (context.Message.ItemSold)
+        {
+            auction.Winner = context.Message.Winner;
+            auction.SoldAmount = (int)context.Message.Amount;
+        }
+
+        auction.Status = "Finished";
+        await auction.SaveAsync();
+    }
+}
+
+70. Adding a new client to the Identity service
+-- IdentityService -> Config.cs --
+ new Client{
+    // if we use mobile app, we can't write the Client like this
+    ClientId = "nextApp",
+    ClientName = "nextApp",
+    ClientSecrets = {new Secret("secret".Sha256())},
+    AllowedGrantTypes = {GrantType.ClientCredentials},
+    RequirePkce = false,
+    RedirectUris = {"http://localhost:3000/api/auth/callback/id-server"}, // that client app port that is listening
+    AllowOfflineAccess  = true, // enable refresh token functionality
+    AllowedScopes = {"openid", "profile", "auctionApp"},
+    AccessTokenLifetime = 3600*24*30*12
+}

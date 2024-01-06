@@ -1,0 +1,538 @@
+34. Introduction to Section 4
+
+Asynchronous Messaging
+-> No Request/Response
+-> Fire and forget
+-> Event model(publish/subscribe)
+-> Typically used for service to service messaging
+-> Transports(RabbitMQ, Azure Service Bus, Amazon SQS)
+-> Services only need to know about the bus
+-> More complex than sync messaging
+
+" The message bus should be clustered" 
+-> clustering a message bus means running multiple instances of the 
+message broker software on different servers
+-> if one instance of the message broker fails, the other instances can continue to process messages
+
+Benefits:
+-> scalability
+-> resilience
+-> availability
+
+To cluster a message bus, you will need to install and configure multiple 
+instances of the message broker software on different servers
+You will also need to configure the message broker software to work together as a cluster
+
+
+35. What is RabbitMQ
+-> message Broker - accepts and forwards messages
+-> producer/consumer model(Pub/Sub)
+-> messages are store on queues(message buffer)
+-> can use persistent storage
+-> exchanges can be used for "routing" functionality
+-> uses AMQP
+
+Exchanges:
+-> Direct
+    -> delivers messages to queues based on a routing key    
+
+-> Fanout
+    -> Auction, will publish an auction event to an "Exchange"
+    -> the "Exchange" has multiple queues bound to that exchange, 
+    where it will place the msg in a queue, that will w8 for a 
+    consumer to pick up and consume that msg
+    ->  can be 1,2,..100 queues, doesn't matter
+    -> we can have multiple consumers consuming from the same queue
+
+-> Topic
+    -> does route the msgs for one or more queues based on the routing key
+    -> similar with "Direct" but can go to multiple queues using a key
+
+-> Header
+    -> allows us to specify a Header with a msg that our "Exchange" can use 
+    to publish to various multiple queues, one or more queues
+
+MassTransit
+-> has more abstraction 
+
+https://medium.com/@mtayyipyetis/what-is-masstransit-and-how-to-use-it-basically-4df2a7584825#:~:text=MassTransit%20is%20an%20open%2Dsource,realm%20of%20asynchronous%2C%20distributed%20applications.
+
+
+36. Installing RabbitMQ
+https://hub.docker.com/_/rabbitmq
+
+-- docker-compose.yml --  
+  rabbitmq:
+    image: rabbitmq:3.13-rc-management-alpine
+    ports: 
+      - 5672:5672
+      - 15672:15672
+
+docker compose up -d
+
+RabbitMQ local:
+http://localhost:15672/#/
+
+Username: guest
+Password: guest
+
+
+37. Adding and configuring mass transit
+
+https://masstransit.io/documentation/concepts
+-> it is an equivalent for .net but for messaging broker
+
+MassTransit Transports
+-> RabbitMQ
+-> Azure Service Bus
+-> Amazon SQS
+-> ActiveMQ
+-> Kafka
+-> Azure Event Hub
+-> Azure Functions
+-> AWS Lambda
+
+Packages:
+ctrl+shift+p-> Nuget Gallery-> MassTransit.RabbitMQ 
+    -> AuctionService
+    -> SearchService
+
+-- AuctionService -> Program.cs --
+builder.Services.AddMassTransit(x =>{
+    x.UsingRabbitMq((context, cfg) =>{
+        cfg.ConfigureEndpoints(context);
+    });
+});
+
+-- SearchService -> Program.cs --
+builder.Services.AddMassTransit(x =>{
+    x.UsingRabbitMq((context, cfg) =>{
+        cfg.ConfigureEndpoints(context);
+    });
+});
+
+-> creating a class library for the project
+dotnet new classlib -o src/Contracts
+dotnet sln add src/Contracts
+cd src/AuctionService
+dotnet add reference ../../src/Contracts
+cd ../SearchService
+dotnet add reference ../../src/Contracts
+
+-- Contracts -> Contracts.csproj --
+<Nullable>disable</Nullable>
+
+Dictionary:
+.AddMassTransit :
+    -> Adds MassTransit and its dependencies to the collection, 
+    and allows consumers,sagas, and activities to be configured
+
+.UsingRabbitMQ:
+    -> Configure MassTransit to use RabbitMQ for the transport
+
+.ConfigureEndpoints<T>
+    -> configure the endpoints for all defined consumer, saga, and activity types using
+    an optional endpoint name formatter 
+    if no endpoint name formatter is specified and an MassTransit.IEndpointNameFormatter 
+    is registered in the container, it is resolved from the container 
+    otherwise, the MassTransit.DefaultEndpointNameFormatter is used
+
+Consumer:
+-> a consumer is a class that handles messages sent to a specific endpoint.
+consumers are typically registered with MassTransit using the ConfigureEndpoints() method
+
+Saga
+-> a saga is a state machine that coordinates the processing of multiple messages 
+sagas are useful for handling complex business processes that require multiple steps to complete
+
+Activity types
+-> activity types are used to implement routing slips
+a routing slip is a list of endpoints that a message should be sent to in sequence 
+activity types can be used to perform tasks such as logging, validation, and routing
+
+Container
+-> in ASP.NET Core, a container is a dependency injection container 
+it is responsible for creating and managing instances of objects that your application needs
+
+MassTransit.IEndpointNameFormatter
+-> an object that is responsible for generating the names of endpoints
+endpoint names are used to identify endpoints to MassTransit and to other applications 
+that are communicating with your application
+
+MassTransit.IEndpointNameFormatter
+-> it generates endpoint names based on the type of consumer, saga, or activity 
+type that the endpoint is associated with
+
+EX:
+services.AddMassTransit(x =>{
+    x.AddConsumer<SubmitOrderConsumer>();
+    x.AddSaga<OrderSaga>();
+});
+
+
+38. Adding the contracts 
+ii "D:\Programare\Proiecte\Micro with NextJS\CourseAssets\specs\auctionSvcSpec.pdf"
+search for "Event Emitted Types"
+
+-- Contracts -- 
+AuctionCreated.cs (UpdateAuctionDto.cs)
+AuctionUpdated.cs (UpdateAuctionDto.cs - the props can't accept null values)
+AuctionDeleted.cs (string Id)
+
+39. Adding a consumer to consume a message from the Service bus
+
+-- RequestHelpers -> MappingProfiles.cs --
+-> create map between AuctionCreated and Item class
+
+-- SearchService -> Consumers -> AuctionCreatedConsumer.cs --
+-> inherit from IConsumer(interface from MassTransient)
+-> add automapper intro ctor
+-> create method: async Task Consume(ConsumeContext<AuctionCreated> context)
+
+Tip:
+-> always name the class with Consumer word at the end: AuctionCreatedConsumer.cs
+-> MassTransient is convention based and is expecting the name Consumer at the end of the class
+
+-- Program.cs --
+-> add AutoMapper
+-> add the consumers in the MassTransit service
+     
+
+Dictionary 
+new KebabCaseEndpointNameFormatter()
+    -> Kebab case endpoint formatter, which uses dashes between words
+
+ex: 
+-> you create an endpoint named SearchEndpoint, the KebabCaseEndpointNameFormatter will format the endpoint name as follows:
+search-endpoint
+
+Original endpoint name  | Formatted endpoint name
+-------                 | --------
+SearchEndpoint          | search-endpoint
+CreateOrderEndpoint     | create-order-endpoint
+GetCustomerEndpoint     | get-customer-endpoint
+
+IConsumer<T>: 
+    Defines a class that is a consumer of a message
+    The message is wrapped in an IConsumeContext interface to allow access 
+    to details surrounding the inbound message, including headers 
+
+Bard: "Give me an example for each overload methods that Automapper hase in this method;"builder.Services.AddAutoMapper". Here in the documentation shows 12 "
+
+Bard: I have this class: 
+"public class AuctionCreatedConsumer : IConsumer<AuctionCreated>
+{ ..... 
+}". 
+The question is, if my actual service is down, that contain the AuctionCreatedConsumer.cs, and MassTransient capture multiple messages, 
+and that modify the fields values in the class AuctionCreated.cs, 
+how this changes will be made? how the context handle this? 
+how the messages will come, in what order? 
+
+
+Automapper(3/12):
+1. builder.Services.AddAutoMapper()
+This is the most basic overload and simply adds AutoMapper to 
+the dependency injection container. It will automatically 
+discover and register all AutoMapper profiles in the assembly.
+
+2. builder.Services.AddAutoMapper(Assembly[] assemblies)
+This overload allows you to specify the assemblies that 
+AutoMapper should scan for profiles
+
+3. builder.Services.AddAutoMapper(IEnumerable<Type> profileTypes)
+This overload allows you to specify the types of the AutoMapper 
+profiles that you want to register.
+ . . .
+
+ 40. Publishing the Auction Created event to the bus
+ 
+ -> we created the queue, now we want to publish that message so will 
+ be consumed by the SearchService
+
+ -- AuctionService -> MappingProfiles.cs --
+ CreateMap<AuctionDto, AuctionCreated>();
+
+ -- AuctionsController.cs --
+ -> add IPublishEndpoint to the ctor
+
+var newAuction = _mapper.Map<AuctionDto>(auction);
+await _publishEndpoint.Publish(_mapper.Map<AuctionCreated>(newAuction));
+
+-- Test using Postman --
+{{auctionApi}}/api/auctions
+
+Body: ...
+Pre-request Script: ...
+Tests: ...
+
+{{searchApi}}/api/search?searchTerm={{createdItemModel}}
+Tests: ...
+
+-> start both microservices for testing
+
+Dictionary: 
+IPublishEndpoint (from MassTransit)
+    -> a publish endpoint lets the underlying transport determine 
+    the actual endpoint to which the message is sent
+    -> for example, an exchange on RabbitMQ and a topic on Azure Service bus
+Task Publish<T>(from MassTransit)
+    -> publish a msg to all subscribed customers for the msg type as 
+    specified by tge generic parameter
+    -> the second parameter allows the caller to customize he outgoing 
+    publish context and set things like headers on the message.
+
+Postman build in functions:
+$guid()	        Generates a unique identifier
+$randomColor()	Generates a random color
+$randomInt()	Generates a random integer
+$randomString()	Generates a random string.
+$now()	        Returns the current date and time
+
+
+41. What could go wrong?
+Comparing Monolith with Microservices.
+
+Monolith:
+-> use ACID transactions
+    -> Atomicity    : All operations in a transaction are either all completed or all rolled back.
+    -> Consistency  : The database is left in a consistent state after each transaction.
+    -> Isolation    : Transactions are isolated from each other, so that one transaction cannot see the uncommitted changes of another transaction.
+    -> Durability   : Once a transaction is committed, its changes are permanent and will not be lost, even in the event of a system failure.
+
+If either of these operations fails, the entire transaction is rolled back and neither account is changed.
+
+"Consistent state"
+Each customer has a unique ID number.
+Each customer has a name, address, and phone number.
+Each customer has a balance associated with their account.
+The total balance of all customer accounts is equal to the total amount of money deposited into the database.
+
+EX: 
+If two customers have the same ID number, or if the total balance of all customer accounts 
+does not equal the total amount of money deposited into the database, then the database is inconsistent.
+
+
+Microservices:
+41_1.png
+
+A small though experiment:
+-> if one of our services fails, and a user attempts to create an auction while 
+that service is down, will the Auction Service DB and the Search Service DB be consistent?
+41_2.png
+
+Data Consistency(4:40):
+1. yes
+2. yes 
+3. yes
+4. no -> because doesn't have a retry policy
+5. no 
+
+Data inconsistent is a challenge with microservices
+
+Create an outbox, so when the RabbitMQ is down, the messages are saved
+in the outbox and deleted when the RabbitMQ will back
+
+
+42. Adding a message outbox
+docker compose down
+docker compose up -d
+start AuctionService
+start SearchService
+
+Make the data inconsistent:
+stop the RabbitMQ container
+create a new Auction (Postman) 
+check the data in PostgreSQL and MongoDB
+we will see that the auction is saved in PostgreSQL but not in MongoDB
+
+NugetPackage:
+MassTransit.EntityFrameworkCore -> AuctionService
+
+-- AuctionService -> Program.cs --
+builder.Services.AddMassTransit(c =>
+{
+    c.AddEntityFrameworkOutbox<AuctionDbContext>(o =>
+    {
+        o.QueryDelay = TimeSpan.FromSeconds(10);
+        o.UsePostgres();
+        o.UseBusOutbox();
+    });
+    . . . 
+});
+
+-- AuctionDbContext.cs --
+override 
+{
+    modelBuilder.AddInboxStateEntity();
+    modelBuilder.AddOutboxMessageEntity();
+    modelBuilder.AddInboxStateEntity();
+}
+
+AuctionService
+dotnet ef migrations add Outbox
+dotnet ef database update
+
+-- AuctionsController.cs --
+
+var newAuction = _mapper.Map<AuctionDto>(auction);
+await _publishEndpoint.Publish(_mapper.Map<AuctionCreated>(newAuction));
+var result = await _context.SaveChangesAsync() > 0;
+
+Testing:
+-> restart the RabbitMQ container
+-> start the AuctionService
+-> go to PostgreSQL and refresh the items to see the tables created
+-> stop the AuctionService
+-> stop the RabbitMQ container
+-> start the AuctionService
+-> check the data in OutboxMessage table
+
+
+43. Using message retries
+-> when we get the message and we attempt to save it to the DB that may fail 
+-> we want to retry several time before giving up
+-> stop the mongoDB container
+-> start the AuctionService, SearchService
+-> create a new Auction 
+-> SearchService -> w8 for the timeout form MongoDB
+-> when start again the MongoDB
+-> because we didn't implement a retry, we won't save anything
+
+-- SearchService.cs -> Program.cs --
+x.UsingRabbitMq((context, cfg) =>
+{
+    cfg.ReceiveEndpoint("search-auction-created", e =>
+    {
+        e.UseMessageRetry(r => r.Interval(5, 5));
+        e.ConfigureConsumer<AuctionCreatedConsumer>(context);
+    });
+    . . .
+});
+
+
+44. Consuming fault queues
+
+-> handle exceptions that could happen, that could go in this exchange, 
+and how we can deal with that and then resend so that the SearchService
+can get updated
+
+
+-- AuctionCreatedConsumer.cs --
+if (item.Model == "Foo")
+    throw new ArgumentException("Can't sell car with name of Foo");
+
+-> start AuctionService, SearchService
+-> create new Auction (postman: change {{guid}}-> "Foo")
+
+-- AuctionService -> Consumers -> AuctionCreatedFaultConsumer.cs --
+-> implement the class
+
+-- AuctionService -> Program.cs --
+x.AddConsumersFromNamespaceContaining<AuctionCreatedFaultConsumer>();
+x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("auction", false));
+
+
+45. Challenge: adding the update and delete consumers
+
+-> we already have the Updated and Deleted action in the AuctionsController
+-> we need to publish it to the Service Bus
+-> run all the requests from Postman(from the folder Section 4-> Checkpoints)
+-> check the documentation for MongoDb when u write into AuctionsController
+-> check the delete/update option
+https://mongodb-entities.com/wiki/Entities.html
+"update only a few specified properties" 
+
+
+Postman
+-> (POST)   create new auction
+    -> (P) - parameters from Postman
+    -> fields: make, model(P), color(P), year, mileage(P), imageUrl, reservePrice(P), auctionEnd(from JS)
+
+-> (GET)    get item created from search svc   
+    -> {{searchApi}}/api/search?searchTerm={{createdItemModel}}
+    -> Pre-Req: timeout after 1000s
+    -> Tests
+        -> 'Status code is 200'
+        -> 'Item has been created in search': createdItemId from URL must be == with id in JSON
+
+-> (PUT)    update the created auction Copy 
+    -> Body : make, model, color, mileage, year
+    -> Tests 
+        -> response must be 200    
+
+-> (GET)    get items updated from SearchService 
+    -> {{searchApi}}/api/search?searchTerm={{createdItemModel}}Updated
+    -> Pre-req: timeout 1000ms
+    -> Tests 
+        -> status code is 200
+        -> the model field must contain "Updated" word
+              
+-> (DEL)    delete auction 
+    -> Tests    
+        -> status code is 200
+
+-> (Get)    Get Item created - should return 0 results
+    -> {{auctionApi}}/api/search?searchTerm={{createdItemModel}}
+    -> Pre-req: timeout 1000ms
+    -> Tests 
+        -> 'Status code is 200'
+        -> 'Item has been removed from search" - check if there is any items[] in the json Response
+
+Make tests for all this methods:
+pm.response.json()
+pm.test(...)
+pm.response.to.have.status(...)
+pm.expect(jsonData).to.haveOwnProperty(...)- all prop of the above
+pm.collectionVariables.set(...);
+https://learning.postman.com/docs/writing-scripts/test-scripts/
+
+Run all of them from the Postman folder
+
+Check the mongoDB documentation:
+https://mongodb-entities.com/wiki/Entities.html
+    -> "update only a few specified properties" 
+
+-> think about the mapping configuration: Auction -> AuctionUpdatedContract 
+
+Dictionary:
+pm.expect(jsonData.status).to.eq('Live');
+'Live' -> The value Live is a string that represents the status of something. 
+        In this case, it is likely the status of a product, service, or feature. 
+        The purpose of the test script is to ensure that the API is returning the correct status for the requested resource.
+'Unavailable' -> test will fail
+
+https://blog.postman.com/introducing-postman-live-insights-faster-better-api-debugging/
+
+Postman
+pm.response.json()
+-> parses the response body as JSON
+pm.response.body()
+-> returns the response body as a string
+
+
+46. Challenge solution
+-- SearchService -> Consumers  --
+AuctionDeletedConsumer.cs
+AuctionUpdatedConsumer.cs
+
+-- SearchService -> RequestHelpers -> MappingProfile.cs  --
+CreateMap<AuctionUpdated, Item>();
+
+AuctionService -> RequestHelpers -> MappingProfile.cs --
+CreateMap<Auction, AuctionUpdated>().IncludeMembers(a => a.Item);
+CreateMap<Item, AuctionUpdated>();
+
+AuctionService -> AuctionsController.cs 
+
+UpdateAuction{
+     await _publishEndpoint.Publish(_mapper.Map<AuctionUpdated>(auction));
+}
+
+DeleteAuction{
+    await _publishEndpoint.Publish<AuctionDeleted>(new() { Id = auction.Id.ToString() });
+}
+
+-> we need to clean the DBs, because of the inconsistency data after all the testing
+docker compose down
+docker compose up
+
