@@ -32,6 +32,10 @@ ls src
 dotnet sln add src/AuctionService (add project to the solution)
 code ./src/AuctionService         (open the project)
 
+Add extensions:
+C# Dev Kit
+material icon Theme
+
 
 9. Reviewing and simplifying the project
 
@@ -75,11 +79,10 @@ Critical	  5	LogCritical	    For failures that require immediate attention. Exam
 None	      6	                Specifies that a logging category shouldn't write messages.
 
 -- Program.cs --
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
@@ -88,45 +91,50 @@ app.UseAuthentication();
 app.MapControllers();
 
 app.Run();
+- - - - - - - - - - - - - - - 
+delete the WeatherForecast controller
+delete the WeatherForecast.cs
 
-open the terminal: ctrl + `
-dotnet watch
-
-change folder: ctrl + ,
+ctrl + `      (open the terminal)
+cd src/AuctionService
+dotnet watch 
+ctrl+c        (stop the app) 
+ctrl + ,      (change folder)
 
 
 10. Add the entity classes
-From the folder project not from Solution Explorer (tab on the left)
+Add the classes from the folder project not from Solution Explorer (tab on the left)
 
 Entities
-  -> Auction.cs
+  -> Auction.cs       (Id, ReservePrice, Seller, Winner, SoldAmount, CurrentHighBid, CreateAt, UpdateAt, Status, Item)
   -> Item.cs
   -> Status.cs (enum)
 
 
 11. Adding the Database context class
+
 -> install "Nuget Gallery" extension
 ctrl + shift + p -> Nuget Gallery
-Microsoft.EntityFrameworkCore
 Microsoft.EntityFrameworkCore.Design
 Npgsql.EntityFrameworkCore.PostgreSQL
 AutoMapper.Extensions.Microsoft.DependencyInjection
 
--- GlobalUsing.cs --
-Data      -> ActionDbContext.cs (Auctions)
+GlobalUsing.cs
+Data      -> AuctionDbContext.cs (Auctions)
+          -> create a ctor with DbContextOptions parameter that derived from the base class 
           -> make a new class with field DbSet<Auction> Auctions
 
-Entities  -> Item.cs ( [Table("Items")])
-          -> mark the class as a table with table name "Items"
-
--> create the connection string: 
-"DefaultConnection":"Server=localhost:5432;User Id=postgres;Password=postgrespw;Database=Auctions"
-
+Entities  -> mark the class Item.cs as a table with table name "Items"
+          -> Item.cs ( [Table("Items")])
+          
 -> add Postgres service to Program.cs: 
 builder.Services.AddDbContext<AuctionDbContext>(opt=>
 {
     opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+
+-> create the connection string: 
+"DefaultConnection":"Server=localhost:5432;User Id=postgres;Password=postgrespw;Database=Auctions"
 
 -> install .net ef tool 
 dotnet tool list -g
@@ -171,8 +179,10 @@ volumes:
 Powershell:
 docker compose up -d 
 
+https://hub.docker.com/_/postgres
+
 Carsties-> src -> AuctionService
-cd "D:\Programare\Proiecte\Micro with NextJS\Main Project\Carsties\src\AuctionService"
+cd "D:\Programare\Proiecte\Micro with NextJS\Main Project\Carties\src\AuctionService"
 
 dotnet ef database update
 
