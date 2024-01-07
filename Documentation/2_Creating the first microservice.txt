@@ -229,9 +229,9 @@ dotnet watch
 !!! de intrat mai adanc in AutoMapper !!
 https://docs.automapper.org/en/stable/Getting-started.html
 
-DTOs -> ActionDto.cs 
-     -> CreateAuctionDto
-     -> UpdateAuctionDto
+DTOs -> AuctionDto.cs 
+     -> CreateAuctionDto.cs
+     -> UpdateAuctionDto.cs
 
 RequestHelpers -> MappingProfiles.cs
 
