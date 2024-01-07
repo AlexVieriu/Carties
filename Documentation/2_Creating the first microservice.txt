@@ -361,7 +361,7 @@ Click on the Folder(Section 2) and run all Actions
 git config --global user.email "vieriu.alexandru.25@gmail.com"
 git config --global user.name "AlexVieriu"
 git init
-dotnet new gitignore
+dotnet new gitignore      (create a .gitignore file in the proj, so we don't save all the docs in the Github; creating the file like this will have some default values)
 git add .
 git commit -m "End of section 2"
 git remote add origin https://github.com/AlexVieriu/Carsties.git
