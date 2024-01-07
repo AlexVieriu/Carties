@@ -293,15 +293,15 @@ http://localhost:7001/api/auctions/6a5011a1-fe1f-47df-9a32-b5346b289391
 
 16. Adding a postman collection
 
+Add the collection from the documentation
+ii "D:\Programare\Proiecte\Micro with NextJS\CourseAssets\postman"
+Postman -> File -> Import -> Files -> D:\Programare\Proiecte\Micro with NextJS\CourseAssets\postman
+
 Adding alias to the URL in Postman
 -> click on the collection LVL(Microservices NextJS) -> Variables -> add alias :
     -> Variable: auctionApi
     -> Initial value: http://localhost:7001
     -> Current value: http://localhost:7001  
-
-Add the collection from the documentation
-ii "D:\Programare\Proiecte\Micro with NextJS\CourseAssets\postman"
-Postman -> File -> Import -> Files -> D:\Programare\Proiecte\Micro with NextJS\CourseAssets\postman
 
 Testing in Postman
 https://learning.postman.com/docs/writing-scripts/script-references/test-examples/
