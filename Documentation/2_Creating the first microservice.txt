@@ -334,6 +334,7 @@ Task<ActionResult<CreateAuctionDto>> CreateAuction(CreateAuctionDto createAuctio
 // if we look in the migration folder there is a .ValueGeneratedOnAdd() method
 CreatedAtAction(nameof(GetAuctionById), new { auction.Id }, _mapper.Map<AuctionDto>(auction))
 
+
 18. Adding the update auction request
 
 [HttpPut("{id}")]
