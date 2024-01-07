@@ -36,6 +36,21 @@ Add extensions:
 C# Dev Kit
 material icon Theme
 
+Creating automatic private field from ctor with _
+.editorconfig
+ii "D:\Programare\Proiecte\Micro with NextJS\CourseAssets\snippets\editorconfig.txt"
+
+[*.{cs,vb}]
+dotnet_naming_rule.private_members_with_underscore.symbols  = private_fields
+dotnet_naming_rule.private_members_with_underscore.style    = prefix_underscore
+dotnet_naming_rule.private_members_with_underscore.severity = suggestion
+
+dotnet_naming_symbols.private_fields.applicable_kinds           = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_style.prefix_underscore.capitalization = camel_case
+dotnet_naming_style.prefix_underscore.required_prefix = _
+
 
 9. Reviewing and simplifying the project
 
@@ -263,7 +278,8 @@ public async Task<ActionResult<AuctionDto>> GetAuctionById(Guid id)
 {
   // get the auctions by id
   // FirstOrDefaultAsync
-  return NotFound() or map the action to actionDto
+  return NotFound() if auction is null
+  map the action to actionDto
 }
 
 Test with Postman 
