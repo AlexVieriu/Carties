@@ -7,25 +7,15 @@
 -> we don't share DBs between microservices !!!
 
 Documentation 
-ii "D:\Programare\Proiecte\Micro with NextJS\CourseAssets\specs\searchSvcSpec.pdf"
+ii "D:\Programare\Proiecte\Micro with NextJS\CourseAssets\specs\searchSvcSpec.pdf"  (local)
+code "Documentation\CourseAssets\specs\searchSvcSpec.pdf"                           (project)
 
-cd "D:\Programare\Proiecte\Micro with NextJS\Main Project\Carsties"
 dotnet new webapi --use-controllers -o src/SearchService
 dotnet sln add src/SearchService
 
 -- Program.cs --
-var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-builder.Services.AddControllers();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-app.MapControllers();
-
-app.Run();
-
+delete swagger things
+delete httpredirect
 
 -- launchSettings.json --
 {
