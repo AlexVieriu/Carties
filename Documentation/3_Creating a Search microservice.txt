@@ -133,12 +133,17 @@ ctrl+c
 
 
 26. Adding seed data
-Postman -> Auctions -> GetAllAuctions -> 
-  -> open docker -> start the project AuctionService(dotnet watch)
-  -> send the request -> copy all JSON result
+open docker -> start the project AuctionService(dotnet watch)
+open Postman -> Auctions -> GetAllAuctions -> copy the Response and 
+paste it into SearchService -> Data -> Auctions.json
 
--- SearchService -> Data -- 
-Auctions.json (paste the JSON)
+-- SearchService  -- 
+Create New File: ctrl+N
+Data-> Auctions.json (paste the JSON)
+
+-> copy the code from Programs.cs relevant to the MongoDB
+and paste it in DbInitializer.cs, in the static method
+
 DbInitializer.cs
   -> create a static methods InitDB(WebApplication app)
   -> create the connection to the MongoDB 
@@ -154,8 +159,8 @@ DB            -> the main entrypoint for all data access methods of the library
 .Key()        -> add a key definition for the index
 
 File.ReadAllTextAsync(" . . . ")
--> Asynchronously opens a text file, reads all the text in the file, and then closes
-  the file
+-> Asynchronously opens a text file, reads all the text in the file(json, xml, csv, txt)
+, and then closes the file
 
 new JsonSerializerOptions { PropertyNameCaseInsensitive = true }; 
 -> Gets or sets a value that indicates whether a property's name 
