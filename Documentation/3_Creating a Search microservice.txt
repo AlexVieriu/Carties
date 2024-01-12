@@ -107,7 +107,29 @@ https://www.baeldung.com/ops/docker-mounting-multiple-volumes#:~:text=Docker%20h
 
 25. Adding the Item model
 
-Models-> Item.cs -> copy class AuctionService-> AuctionDto.cs(without the id)
+GlobalUsing.cs
+Models-> Item.cs -> copy class from AuctionService-> DTOs -> AuctionDto.cs(without the id)
+
+-> we don't need to give it an id because is coming from Entity (MongoDB.Entities.Entity)
+
+-- Program.cs --
+await DB.InitAsync("SearchDB", MongoClientSettings
+.FromConnectionString(builder.Configuration.GetConnectionString("MongoDbConnection")));
+
+await DB.Index<Item>()
+    .Key(x => x.Make, KeyType.Text)
+    .Key(x => x.Model, KeyType.Text)
+    .Key(x => x.Color, KeyType.Text)
+    .CreateAsync();
+
+-- appsettings.Development.json --
+  "ConnectionStrings": {
+    "MongoDbConnection": "mongodb://root:mongopw@localhost:27017"
+  }
+
+dotnet build
+dotnet watch
+ctrl+c
 
 
 26. Adding seed data
