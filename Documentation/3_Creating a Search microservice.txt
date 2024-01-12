@@ -82,10 +82,17 @@ volumes:
   pgdata:
   mongodata:
 
+-> for more information about the environmentVariables for MongoDB
+search on the link above "Environment Variables"
+-> 27017  -> in the LEFT is the external port
+          -> in the RIGHT is the internal port
 
 ii . 
 cd "D:\Programare\Proiecte\Micro with NextJS\Main Project\Carsties"
 docker compose up -d
+
+-> check if the MongoDb is up and running on Docker
+-> if not, check the 
 
 - add MongoDb for VS Code extension 
 - connect to Mongo -> Advanced Connection Settings
