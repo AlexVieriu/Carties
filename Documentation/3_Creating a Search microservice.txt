@@ -200,6 +200,12 @@ Open Postman
   - initial value: http://localhost:7002 
   - current value: http://localhost:7002 
 
+DB.Find<Item>()
+  -> it will find all the items in the collection
+  -> ex: "Ford", "Ford Audi"(will find all the cars with Ford and Audi)
+         "FordAudi" (0 items) 
+              
+
 open docker
 start containers
 dotnet watch
