@@ -261,13 +261,20 @@ Add 3 more Get All request in Postman:
   !string.IsNullOrEmpty(searchParams.Seller) ...
   !string.IsNullOrEmpty(searchParams.Winner) ...
 
--> Get all items With Test as Seller
+_ -> it's a default parameter
+
+Why we need the Seller and the Winner here ???
+
+-> Postman tests
 {{searchApi}}/api/search?seller=bob
+{{searchApi}}/api/search?seller=tom
 {{searchApi}}/api/search?winner=bob
 {{searchApi}}/api/search?filterBy=finished
+{{searchApi}}/api/search?filterBy=finished&seller=bob
 
 
 30. Synchronous messaging 
+
 
 31. Adding Http communication to get the data
 
