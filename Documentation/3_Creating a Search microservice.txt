@@ -403,14 +403,35 @@ public IQueryable<AuctionDto> GetAuctions(string date)
 docker compose down
 docker compose up -d
 
-ctrl+shift+p -> Nuget gallery -> Microsoft.Extensions.Http.Polly
+Testing the resilient communication:
+-> stop AuctionService
+-> start SearchService
+-> start AuctionService
+  -> in the SearchService we still get 0 items
+
+-> we need to restart the SearchService again so we can get back the data again
+
+Is there a better approach?
+-> use Polly
+-> we use power 2 in seconds to call the AuctionService 
+First call: 2^2, Second call: 2^3, Third call: 2^4, Fourth call: 2^5, Fifth call: 2^6, etc.
+
+ctrl + shift + p -> Nuget gallery -> Microsoft.Extensions.Http.Polly
 
 -- SearchService -> Program.cs --
 builder.Services.AddHttpClient<AuctionSvcHttpClient>().AddPolicyHandler(GetPolicy());
 
+(12:00)
 app.Lifetime.ApplicationStarted.Register(async () =>
 {
-    await DbInitializer.InitDb(app);
+    try
+    {
+        await DbInitializer.InitDB(app);
+    }
+    catch (System.Exception ex)
+    {
+        WriteLine(ex);
+    }
 });
 
 static IAsyncPolicy<HttpResponseMessage> GetPolicy()

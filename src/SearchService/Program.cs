@@ -2,7 +2,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddHttpClient<AuctionSvcHttpClient>();
+builder.Services.AddHttpClient<AuctionSvcHttpClient>()
+    .AddPolicyHandler(GetPolicy());
 
 var app = builder.Build();
 
@@ -10,13 +11,22 @@ var app = builder.Build();
 app.UseAuthorization();
 app.MapControllers();
 
-try
+app.Lifetime.ApplicationStarted.Register(async () =>
 {
-    await DbInitializer.InitDB(app);
-}
-catch (System.Exception ex)
-{
-    WriteLine(ex);
-}
+    try
+    {
+        await DbInitializer.InitDB(app);
+    }
+    catch (System.Exception ex)
+    {
+        WriteLine(ex);
+    }
+});
 
 app.Run();
+
+static IAsyncPolicy<HttpResponseMessage> GetPolicy()
+    => HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+        .WaitAndRetryForeverAsync(_ => TimeSpan.FromSeconds(6));
