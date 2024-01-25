@@ -1,3 +1,5 @@
+using AutoMapper.QueryableExtensions;
+
 namespace AuctionService.Controllers;
 
 [ApiController]
@@ -14,14 +16,21 @@ public class AuctionsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<AuctionDto>>> GetAllAuctions()
+    public async Task<ActionResult<List<AuctionDto>>> GetAllAuctions(string date)
     {
-        var auctions = await _auctionDbContext.Auctions
-                        .Include(x => x.Item)
-                        .OrderBy(x => x.Item.Make)
-                        .ToListAsync();
+        // 
+        var query = _auctionDbContext.Auctions.OrderBy(x => x.Item.Make).AsQueryable();
 
-        return _mapping.Map<List<AuctionDto>>(auctions);
+        if (!string.IsNullOrEmpty(date))
+            query = query.Where(x => x.UpdatedAt.CompareTo(
+                DateTime.Parse(date).ToUniversalTime()) > 0);
+
+        var auctionDtoList = await query.ProjectTo<AuctionDto>(_mapping.ConfigurationProvider)
+            .ToListAsync();
+
+        //var auctionDtoList = await query.Select(a => _mapper.Map<Auction, AuctionDto>(a)).ToListAsync();
+
+        return auctionDtoList;
     }
 
     [HttpGet("{id}")]

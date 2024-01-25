@@ -274,44 +274,129 @@ Why we need the Seller and the Winner here ???
 
 
 30. Synchronous messaging 
+-> definitions
+-> examples
 
 
 31. Adding Http communication to get the data
 
+SearchService -> Data -> auctions.json
+-> here we have all the auctions
+
+-> first approach we use HTTP communication between SearchService and AuctionService
+just to test the flow
+-> this approach is a synchronies communication because services are dependent 
+on each other
+-> after this we take a look at a difference approach, the bus messaging approach,  
+we will use the RabbitMQ(it's used more for local environments)
+-> other tools like RabbitMQ: Amazon SQS, Azure Service Bus, Apache RocketMQ  
+
+SearchService -> Data -> DbInitializer.cs
+-> at this point on the course we are taking the data from a file: auctions.json
+-> we want to get the data from AuctionService
+
 -- ActionService -> Controller -> AuctionsController.cs --
 -> we are changing the code
 
-public async Task<ActionResult<List<AuctionDto>>> GetAllAuctions(string date)
-    {
-        var query = _context.Auctions.OrderBy(x => x.Item.Make).AsQueryable();
+public async Task<ActionResult<List<AuctionDto>>> GetAllAuctions(string date){
+  var query = _context.Auctions.OrderBy(x => x.Item.Make).AsQueryable();
 
-        if (!string.IsNullOrEmpty(date))
-        {
-            query = query.Where(x => x.UpdateAt.CompareTo(DateTime.Parse(date).ToUniversalTime()) > 0);
-        }
+  if (!string.IsNullOrEmpty(date))    
+    query = query.Where(x => x.UpdateAt.CompareTo(
+      DateTime.Parse(date).ToUniversalTime()) > 0);
 
-        return await query.ProjectTo<AuctionDto>(_mapper.ConfigurationProvider).ToListAsync();
-    }
+  return await query.ProjectTo<AuctionDto>(_mapper.ConfigurationProvider).ToListAsync();
+}
 
+(7:00)
 Test it:
 -> Postman -> Section 2 -> Get all Auctions
 
 cd ../SearchService
 -- SearchService -> Services -> AuctionSvcHttpClient.cs --
+-> get the UpdatedAt(Item.cs) from DB
+-> sort it by Descending
+-> convert UpdateAt to string
+DB.Find<Item, string>()
+  .Sort(. . .)
+  .Project(. . .)
+  .ExecuteFirstAsync();
+
 
 -- SearchService -> appsettings.Development --
 "AuctionServiceUrl":"http://localhost:7001"
 
+-- SearchService -> Program.cs --
+builder.Services.AddHttpClient<AuctionSvcHttpClient>();
+
 -- DbInitializer.cs --
--> make the changes
+-> delete all of the if(count == 0) statement inside
 
 
-delete the MongoDB container
+delete the MongoDB container ( from Docker desktop)
 docker compose up -d
 docker volume list
 docker volume rm 01fb53
-start the AuctionService
-start the SearchService
+dotnet watch (for AuctionService)
+dotnet watch (for SearchService)
+
+-- Dictionary --
+.AsQueryable() -> Converts a generic System.Collections.Generic.IEnumerable`1 
+                  to a generic System.Linq.IQueryable`1.
+
+-> if we want to query something, the object that we take from the DB need to be of
+type IQueryable
+-> here: "var query = _context.Auctions.OrderBy(x => x.Item.Make)" the query is of 
+type IOrderQueryable
+
+"UpdateAt" is a field from the class Auctions
+
+Examples with .AsQueryable:
+var auctions = _auctionDbContext.Auctions
+    .AsQueryable()
+    .Where(x => x.IsOpen == true);
+
+var auctions = _auctionDbContext.Auctions
+  .AsQueryable()
+  .OrderBy(x => x.StartTime);   
+
+var auctionIds = _auctionDbContext.Auctions
+    .AsQueryable()
+    .Select(x => x.Id);
+
+
+.ProjectTo<TDestination>    
+-> extension method to project from a queryable using the provided mapping engine
+-> it is a alternative example for _mapper.Map<Product,ProductDto>(product);
+
+.Map<Source, Destination>(object source);
+
+Examples:
+(1)
+var product = _context.Products.FirstOrDefault();
+var summary = _mapper.Map<Product, ProductSummaryDto>(product);
+
+(2)            
+public IQueryable<AuctionDto> GetAuctions(string date)
+{
+    var auctions = _context.Auctions
+        .Where(a => a.UpdatedAt.CompareTo(DateTime.Parse(date).ToUniversalTime()) > 0)
+        .Select(a => _mapper.Map<Auction, AuctionDto>(a)
+            .ForMember(a => a.Summary, opts => opts.MapFrom(a => a.Description)));
+
+    return auctions;
+}
+
+(3)
+public IQueryable<AuctionDto> GetAuctions(string date)
+{
+    var auctions = _context.Auctions
+        .Where(a => a.UpdatedAt.CompareTo(DateTime.Parse(date).ToUniversalTime()) > 0)
+        .Select(a => _mapper.Map<Auction, AuctionDto>(a));
+
+    return auctions;
+}
+
 
 
 32. Making our Http communication resilient

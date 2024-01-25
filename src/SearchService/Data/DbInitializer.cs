@@ -15,17 +15,18 @@ public class DbInitializer
 
         var count = await DB.CountAsync<Item>();
 
-        if (count == 0)
-        {
-            WriteLine("No data - will attempt to seed");
-            var itemData = await File.ReadAllTextAsync("Data/Auctions.json");
+        using var scope = app.Services.CreateScope();
 
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        var httpClient = scope.ServiceProvider.GetRequiredService<AuctionSvcHttpClient>();
 
-            // it will take that formatting items and converted into a formatted Items
-            var items = JsonSerializer.Deserialize<List<Item>>(itemData, options);
+        var items = await httpClient.GetItemsForSearchDb();
 
+        WriteLine(items.Count + " returned from auction service");
+
+        if (items.Count > 0)
             await DB.SaveAsync(items);
-        }
+
+        // Question: why we are not using DI, HttpClientFactory? and declare the the httpclient in the Program.cs?
+        // as a Singleton, Scoped or Transient
     }
 }
