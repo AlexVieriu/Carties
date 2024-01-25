@@ -27,7 +27,8 @@ You will also need to configure the message broker software to work together as 
 and retrieve the message that we expected
 -> the buss is responsible for retrying messages and store them in queues
 
-35. What is RabbitMQ
+
+35. What is RabbitMQ ?
 -> message Broker - accepts and forwards messages
 -> producer/consumer model(Pub/Sub)
 -> messages are store on queues(message buffer)
@@ -35,11 +36,11 @@ and retrieve the message that we expected
 -> exchanges can be used for "routing" functionality
 -> uses AMQP
 
-Exchanges:
+Type of Exchanges:
 -> Direct
     -> delivers messages to queues based on a routing key    
 
--> Fanout
+-> Fanout(we using this)
     -> Auction, will publish an auction event to an "Exchange"
     -> the "Exchange" has multiple queues bound to that exchange, 
     where it will place the msg in a queue, that will w8 for a 
@@ -56,9 +57,14 @@ Exchanges:
     to publish to various multiple queues, one or more queues
 
 MassTransit
--> has more abstraction 
+-> has more abstraction for the transport
+-> we can use other bus transport technologies like RabbitMQ
 
 https://medium.com/@mtayyipyetis/what-is-masstransit-and-how-to-use-it-basically-4df2a7584825#:~:text=MassTransit%20is%20an%20open%2Dsource,realm%20of%20asynchronous%2C%20distributed%20applications.
+
+https://bard.google.com
+-> what is the difference between Direct, Fanout, Topic and Header when it comes to Exchanges?
+ Give me at least 2 real word examples with each exchange.
 
 
 36. Installing RabbitMQ
