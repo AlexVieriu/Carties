@@ -237,13 +237,21 @@ builder.Services.AddMassTransit(x =>
 
 
 38. Adding the contracts 
-ii "D:\Programare\Proiecte\Micro with NextJS\CourseAssets\specs\auctionSvcSpec.pdf"
+ii "D:\Programare\Proiecte\Micro with NextJS\CourseAssets\specs\auctionSvcSpec.pdf" (local folder)
+code "Documentation\CourseAssets\specs\auctionSvcSpec.pdf" (in the proj)
 search for "Event Emitted Types"
+
+MassTransient required to have the same namespace on both projects if we want to create 
+classes in each project for contracts(not like we did it now, creating a lib project
+and put the contracts in it)
 
 -- Contracts -- 
 AuctionCreated.cs (UpdateAuctionDto.cs)
-AuctionUpdated.cs (UpdateAuctionDto.cs - the props can't accept null values)
-AuctionDeleted.cs (string Id)
+AuctionUpdated.cs (only string Id)
+AuctionDeleted.cs (add string Id)
+
+-> we can't use the AuctionDto.cs because is in the different namespace, from the 
+AuctionCreated.cs
 
 39. Adding a consumer to consume a message from the Service bus
 
