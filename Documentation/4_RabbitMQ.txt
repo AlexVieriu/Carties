@@ -23,6 +23,9 @@ To cluster a message bus, you will need to install and configure multiple
 instances of the message broker software on different servers
 You will also need to configure the message broker software to work together as a cluster
 
+-> each service need to implement a retry policy, so if the buss is down, can try again, 
+and retrieve the message that we expected
+-> the buss is responsible for retrying messages and store them in queues
 
 35. What is RabbitMQ
 -> message Broker - accepts and forwards messages
