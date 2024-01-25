@@ -255,13 +255,19 @@ AuctionCreated.cs
 
 39. Adding a consumer to consume a message from the Service bus
 
--- RequestHelpers -> MappingProfiles.cs --
--> create map between AuctionCreated and Item class
+-- SearchService -> RequestHelpers -> MappingProfiles.cs --
+-> create map between AuctionCreated.cs and Item.cs
 
 -- SearchService -> Consumers -> AuctionCreatedConsumer.cs --
--> inherit from IConsumer(interface from MassTransient)
--> add automapper intro ctor
+-> inherit from IConsumer<AuctionCreated>(an interface from MassTransient)
+-> add automapper into ctor
 -> create method: async Task Consume(ConsumeContext<AuctionCreated> context)
+public async Task Consume(ConsumeContext<AuctionCreated> context)
+{
+    WriteLine("--> Consuming auction created: " + context.Message);
+    var item = _mapper.Map<Item>(context.Message);
+    await item.SaveAsync();
+}
 
 Tip:
 -> always name the class with Consumer word at the end: AuctionCreatedConsumer.cs
@@ -272,13 +278,13 @@ Tip:
 -> add the consumers in the MassTransit service
      
 
-Dictionary 
+-- Dictionary --
 new KebabCaseEndpointNameFormatter()
     -> Kebab case endpoint formatter, which uses dashes between words
 
 ex: 
--> you create an endpoint named SearchEndpoint, the KebabCaseEndpointNameFormatter will format the endpoint name as follows:
-search-endpoint
+-> you create an endpoint named SearchEndpoint, the KebabCaseEndpointNameFormatter 
+will format the endpoint name as follows: search-endpoint
 
 Original endpoint name  | Formatted endpoint name
 -------                 | --------
@@ -291,17 +297,17 @@ IConsumer<T>:
     The message is wrapped in an IConsumeContext interface to allow access 
     to details surrounding the inbound message, including headers 
 
-Bard: "Give me an example for each overload methods that Automapper hase in this method;"builder.Services.AddAutoMapper". Here in the documentation shows 12 "
+Bard: "Give me an example for each overload methods that Automapper have 
+in this method:
+"builder.Services.AddAutoMapper" (here in the documentation shows 12")
 
 Bard: I have this class: 
-"public class AuctionCreatedConsumer : IConsumer<AuctionCreated>
-{ ..... 
-}". 
-The question is, if my actual service is down, that contain the AuctionCreatedConsumer.cs, and MassTransient capture multiple messages, 
+"public class AuctionCreatedConsumer : IConsumer<AuctionCreated> { ..... }". 
+If my service is down, that contain the AuctionCreatedConsumer.cs, 
+and MassTransient capture multiple messages, 
 and that modify the fields values in the class AuctionCreated.cs, 
 how this changes will be made? how the context handle this? 
 how the messages will come, in what order? 
-
 
 Automapper(3/12):
 1. builder.Services.AddAutoMapper()
