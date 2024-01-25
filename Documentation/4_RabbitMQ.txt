@@ -114,6 +114,10 @@ ctrl+shift+p-> Nuget Gallery-> MassTransit.RabbitMQ
     -> AuctionService
     -> SearchService
 
+-> as 20 dec 2023, MassTransient added support for .NET 8
+-> in the pas we had some problems, if we had .net 8 projects, and no support 
+from MassTransient on .NET 8
+
 -- AuctionService -> Program.cs --
 builder.Services.AddMassTransit(x =>{
     x.UsingRabbitMq((context, cfg) =>{
@@ -128,6 +132,7 @@ builder.Services.AddMassTransit(x =>{
     });
 });
 
+(7:30)
 -> creating a class library for the project
 dotnet new classlib -o src/Contracts
 dotnet sln add src/Contracts
@@ -139,20 +144,31 @@ dotnet add reference ../../src/Contracts
 -- Contracts -> Contracts.csproj --
 <Nullable>disable</Nullable>
 
-Dictionary:
+
+-- Dictionary --
 .AddMassTransit :
     -> Adds MassTransit and its dependencies to the collection, 
-    and allows consumers,sagas, and activities to be configured
+    and allows consumers, sagas, and activities to be configured
 
 .UsingRabbitMQ:
     -> Configure MassTransit to use RabbitMQ for the transport
+    -> can be replaced with other transports:
+        -> Azure Service Bus
+        -> Amazon SQS
+        -> ActiveMQ
+        -> gPRC
+        -> In Memory
+        -> Kafka
+        -> SQL/DB
 
 .ConfigureEndpoints<T>
     -> configure the endpoints for all defined consumer, saga, and activity types using
     an optional endpoint name formatter 
-    if no endpoint name formatter is specified and an MassTransit.IEndpointNameFormatter 
+    -> if no endpoint name formatter is specified and an MassTransit.IEndpointNameFormatter 
     is registered in the container, it is resolved from the container 
     otherwise, the MassTransit.DefaultEndpointNameFormatter is used
+    ->> what will happen is the endpoint will take the name of the consumer, 
+    if we let it as a default
 
 Consumer:
 -> a consumer is a class that handles messages sent to a specific endpoint.
@@ -180,10 +196,43 @@ MassTransit.IEndpointNameFormatter
 -> it generates endpoint names based on the type of consumer, saga, or activity 
 type that the endpoint is associated with
 
+-- Bard --
+I saw the documentation for .ConfigureEndpoints and it said:"Configure the endpoints for all defined consumer, saga, and activity types using
+    //     an optional endpoint name formatter. If no endpoint name formatter is specified
+    //     and an MassTransit.IEndpointNameFormatter is registered in the container, it
+    //     is resolved from the container. Otherwise, the MassTransit.DefaultEndpointNameFormatter
+    //     is used." Can you explain it with more examples?
+
 EX:
 services.AddMassTransit(x =>{
     x.AddConsumer<SubmitOrderConsumer>();
     x.AddSaga<OrderSaga>();
+});
+
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.ConfigureEndpoints(context);
+
+        // Define a queue endpoint named "myQueue"
+        cfg.RabbitMqEndpoint("myQueue")
+            .QueueName("myQueue")
+            .Durable(true);
+    });
+});
+
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.ConfigureEndpoints(context);
+
+        // Define an exchange endpoint named "myExchange"
+        cfg.RabbitMqEndpoint("myExchange")
+            .ExchangeName("myExchange")
+            .Type("fanout");
+    });
 });
 
 
