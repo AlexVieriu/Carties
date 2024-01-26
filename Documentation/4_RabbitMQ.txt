@@ -335,6 +335,7 @@ profiles that you want to register.
  -- AuctionsController.cs --
  -> add IPublishEndpoint to the ctor
 
+CreateAuction()
 var newAuction = _mapper.Map<AuctionDto>(auction);
 await _publishEndpoint.Publish(_mapper.Map<AuctionCreated>(newAuction));
 
@@ -367,6 +368,31 @@ $randomColor()	Generates a random color
 $randomInt()	Generates a random integer
 $randomString()	Generates a random string.
 $now()	        Returns the current date and time
+
+Bard:
+How .SaveChangesAsync() method is working in entity framework? 
+I saw that after i called this method, a generated Id was initialized on my class. 
+
+The .SaveChangesAsync() method in Entity Framework is an asynchronous method that is used 
+to persist changes made to entities in the current context to the underlying database. 
+When you call this method, Entity Framework performs the following steps:
+
+Detects changes: Entity Framework scans all entities in the current context and identifies 
+                 any entities that have been modified, added, or deleted.
+
+Prepares changes: Entity Framework prepares the changes to be persisted to the database. 
+                  This may involve generating new IDs for new entities, updating foreign keys 
+                  for related entities, and creating the appropriate SQL statements for the 
+                  changes.
+
+Sends changes to the database: Entity Framework sends the prepared changes to the underlying 
+                               database. This may involve multiple round trips to the database 
+                               if the changes involve multiple tables or complex relationships.
+
+Resets change tracking: Once the changes have been persisted to the database, Entity Framework 
+                        resets the change tracking status of the entities. This means that any 
+                        changes made to the entities after they have been saved will not be 
+                        reflected in the database until the next call to .SaveChangesAsync().
 
 
 41. What could go wrong?

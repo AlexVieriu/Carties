@@ -8,11 +8,15 @@ public class AuctionsController : ControllerBase
 {
     private readonly AuctionDbContext _auctionDbContext;
     private readonly IMapper _mapping;
+    private readonly IPublishEndpoint _pubEndpoint;
 
-    public AuctionsController(AuctionDbContext auctionDbContext, IMapper mapping)
+    public AuctionsController(AuctionDbContext auctionDbContext,
+                              IMapper mapping,
+                              IPublishEndpoint pubEndpoint)
     {
         _auctionDbContext = auctionDbContext;
         _mapping = mapping;
+        _pubEndpoint = pubEndpoint;
     }
 
     [HttpGet]
@@ -55,12 +59,18 @@ public class AuctionsController : ControllerBase
         auction.Seller = "test";
 
         _auctionDbContext.Auctions.Add(auction);
+        // .SavechangesAsync steps: Detect changes -> Prepare changes -> Send changes to-> Reset change tracking
+        // The Id is generated at the "Prepare changes" step
         var result = await _auctionDbContext.SaveChangesAsync() > 0;
+
+        var newAuction = _mapping.Map<AuctionDto>(auction);
+
+        await _pubEndpoint.Publish(_mapping.Map<AuctionCreated>(newAuction));
 
         if (!result)
             return BadRequest("Could not save changes to the DB");
 
-        return CreatedAtAction(nameof(GetAuctionById), new { auction.Id }, _mapping.Map<AuctionDto>(auction));
+        return CreatedAtAction(nameof(GetAuctionById), new { auction.Id }, newAuction);
     }
 
     [HttpPut("{id}")]
