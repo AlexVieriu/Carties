@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "JQgUPJMpjhazORzeounDSJCaALfjOzJ/O4rZ3wn9bh2H7LYmaD1n4rsILogAJdkJsO77xmy7wKkiqQhKcUmz7w==",
+  "dgSpecHash": "qaVGcRi7L06+uYURCM0VmFnF/XuWqRh1a76FxGzGEBpgLUBKOylDcfWxlbrdWu6V5Dd8DKLDKsTsFYzYNvZUYg==",
   "success": true,
   "projectFilePath": "D:\\Programare\\Proiecte\\Micro with NextJS\\Main Project\\Carties\\src\\AuctionService\\AuctionService.csproj",
   "expectedPackageFiles": [
@@ -59,7 +59,11 @@
     "C:\\Users\\vieri\\.nuget\\packages\\system.text.encoding.codepages\\6.0.0\\system.text.encoding.codepages.6.0.0.nupkg.sha512",
     "C:\\Users\\vieri\\.nuget\\packages\\system.text.encodings.web\\8.0.0\\system.text.encodings.web.8.0.0.nupkg.sha512",
     "C:\\Users\\vieri\\.nuget\\packages\\system.text.json\\8.0.0\\system.text.json.8.0.0.nupkg.sha512",
-    "C:\\Users\\vieri\\.nuget\\packages\\system.threading.channels\\8.0.0\\system.threading.channels.8.0.0.nupkg.sha512"
+    "C:\\Users\\vieri\\.nuget\\packages\\system.threading.channels\\8.0.0\\system.threading.channels.8.0.0.nupkg.sha512",
+    "C:\\Users\\vieri\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.1\\microsoft.netcore.app.ref.8.0.1.nupkg.sha512",
+    "C:\\Users\\vieri\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.1\\microsoft.windowsdesktop.app.ref.8.0.1.nupkg.sha512",
+    "C:\\Users\\vieri\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.1\\microsoft.aspnetcore.app.ref.8.0.1.nupkg.sha512",
+    "C:\\Users\\vieri\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.1\\microsoft.netcore.app.host.win-x64.8.0.1.nupkg.sha512"
   ],
   "logs": []
 }

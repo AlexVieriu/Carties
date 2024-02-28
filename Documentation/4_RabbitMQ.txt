@@ -413,12 +413,11 @@ Each customer has a name, address, and phone number.
 Each customer has a balance associated with their account.
 The total balance of all customer accounts is equal to the total amount of money deposited into the database.
 
-EX: 
+EX inconsistent state: 
 If two customers have the same ID number, or if the total balance of all customer accounts 
 does not equal the total amount of money deposited into the database, then the database is inconsistent.
 
-
-Microservices:
+(2:27) Microservices:
 41_1.png
 
 A small though experiment:
