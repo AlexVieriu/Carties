@@ -536,8 +536,11 @@ the email isn't lost. The Bus Outbox ensures it gets sent once things are back o
 -> start the AuctionService, SearchService
 -> create a new Auction 
 -> SearchService -> w8 for the timeout form MongoDB
--> when start again the MongoDB
--> because we didn't implement a retry, we won't save anything
+-> when we start again the MongoDB, because we didn't implement a retry, 
+we won't save anything
+
+Solution:
+-> we configure a retry policy
 
 -- SearchService.cs -> Program.cs --
 x.UsingRabbitMq((context, cfg) =>
@@ -549,6 +552,31 @@ x.UsingRabbitMq((context, cfg) =>
     });
     . . .
 });
+
+Dictionary:
+e.UseMessageRetry: 
+    .Interval   
+    .Intervals
+    .Exponential
+    .Incremental
+
+ cfg.UseMessageRetry(r =>
+        r.Exponential(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(5))
+    );
+
+retryLimit: 5 - The message will be retried up to 5 times.
+minInterval: TimeSpan.FromSeconds(1)- The initial retry interval is 1 second.
+maxInterval: TimeSpan.FromSeconds(30) - The maximum interval between retries is capped at 30 seconds.
+intervalDelta: TimeSpan.FromSeconds(5) - The interval between retries increases by 5 seconds with each attempt.    
+
+
+cfg.UseMessageRetry(r =>
+    r.Incremental(3, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(2))
+);
+
+retryLimit: 3 - The message will be retried up to 3 times.
+initialInterval: TimeSpan.FromSeconds(5) - The initial retry interval is 5 seconds.
+intervalIncrement: TimeSpan.FromSeconds(2) - The interval between retries increases by 2 seconds with each attempt.
 
 
 44. Consuming fault queues
