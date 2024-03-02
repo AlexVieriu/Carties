@@ -600,6 +600,14 @@ if (item.Model == "Foo")
 x.AddConsumersFromNamespaceContaining<AuctionCreatedFaultConsumer>();
 x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("auction", false));
 
+Dictionary:
+.AddConsumersFromNamespaceContaining
+-> adds all consumers from the assembly containing the specified type that are in
+the same (or deeper) namespace.
+
+.SetEndpointNameFormatter
+-> set the default endpoint name formatter used for endpoint names
+
 
 45. Challenge: adding the update and delete consumers
 

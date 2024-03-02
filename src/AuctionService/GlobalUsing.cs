@@ -1,4 +1,5 @@
-﻿global using AuctionService.Data;
+﻿global using AuctionService.Consumers;
+global using AuctionService.Data;
 global using AuctionService.DTOs;
 global using AuctionService.Entities;
 global using AutoMapper;
