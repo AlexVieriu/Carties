@@ -55,21 +55,25 @@
           "dependencies": {
             "AutoMapper.Extensions.Microsoft.DependencyInjection": {
               "target": "Package",
-              "version": "[12.0.1, )"
+              "version": "[12.0.0, )"
+            },
+            "MassTransit.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.2.0-develop.1691, )"
             },
             "MassTransit.RabbitMQ": {
               "target": "Package",
-              "version": "[8.2.0-develop.1655, )"
+              "version": "[8.2.0-develop.1691, )"
             },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
               "target": "Package",
-              "version": "[8.0.0, )"
+              "version": "[8.0.2, )"
             },
             "Npgsql.EntityFrameworkCore.PostgreSQL": {
               "target": "Package",
-              "version": "[8.0.0, )"
+              "version": "[8.0.2, )"
             }
           },
           "imports": [

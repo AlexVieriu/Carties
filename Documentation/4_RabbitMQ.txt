@@ -466,7 +466,7 @@ builder.Services.AddMassTransit(c =>
 });
 
 -- AuctionDbContext.cs --
-override 
+override OnModelCreating
 {
     modelBuilder.AddInboxStateEntity();
     modelBuilder.AddOutboxMessageEntity();
@@ -477,6 +477,10 @@ AuctionService
 dotnet ef migrations add Outbox
 dotnet ef database update
 
+dotnet tool update --global dotnet-ef
+dotnet ef
+dotnet ef --version
+
 -- AuctionsController.cs --
 
 var newAuction = _mapper.Map<AuctionDto>(auction);
@@ -486,11 +490,43 @@ var result = await _context.SaveChangesAsync() > 0;
 Testing:
 -> restart the RabbitMQ container
 -> start the AuctionService
--> go to PostgreSQL and refresh the items to see the tables created
--> stop the AuctionService
+-> go to PostgreSQL and refresh the items to see the tables created(InboxState,OutboxMessage, OutboxState)
+
+Create a new auction:
+-> start AuctionService
+-> start SearchService
 -> stop the RabbitMQ container
--> start the AuctionService
--> check the data in OutboxMessage table
+-> create new auction from Postman
+-> look at the PostgreSQL to see the 3 tables populated
+-> send a get request from Postman(no result)
+-> start the Service Bus
+-> send a get request from Postman(we have result)
+-> to see the response we need to stay a bit(donno why)
+
+
+Dictionary:
+.AddEntityFrameworkOutbox : 
+    -> configures the Entity Framework Outbox on the bus, which can subsequently be
+    used to configure the transactional outbox on a receive endpoint.
+.UseBusOutbox:
+    -> The Bus Outbox intercepts the MassTransit.ISendEndpointProvider and 
+    MassTransit.IPublishEndpoint interfaces that are used when not consuming messages. 
+    Messages sent or published via those interfaces are written to the outbox instead 
+    of being delivered directly to the message broker.
+
+Gemini: "Explain the definition of .UseBusOutbox more clearly"
+
+Real-World Examples
+
+1. Website Order Confirmation:
+
+A customer places an order on your website.
+Your system needs to send a confirmation email.
+With UseBusOutbox:
+The order details and "send confirmation" instructions are saved to the database.
+A separate process, a few seconds later, sends the actual email.
+Benefit: Even if the email server is temporarily down when the order is placed, 
+the email isn't lost. The Bus Outbox ensures it gets sent once things are back online.
 
 
 43. Using message retries

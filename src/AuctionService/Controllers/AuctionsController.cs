@@ -61,11 +61,11 @@ public class AuctionsController : ControllerBase
         _auctionDbContext.Auctions.Add(auction);
         // .SavechangesAsync steps: Detect changes -> Prepare changes -> Send changes to-> Reset change tracking
         // The Id is generated at the "Prepare changes" step
-        var result = await _auctionDbContext.SaveChangesAsync() > 0;
-
         var newAuction = _mapping.Map<AuctionDto>(auction);
 
         await _pubEndpoint.Publish(_mapping.Map<AuctionCreated>(newAuction));
+
+        var result = await _auctionDbContext.SaveChangesAsync() > 0;
 
         if (!result)
             return BadRequest("Could not save changes to the DB");
@@ -84,11 +84,11 @@ public class AuctionsController : ControllerBase
 
         // TODO: check seller == current user
 
-        auction.Item.Make = updateAuctionDto.Make ?? auction.Item.Make;
-        auction.Item.Model = updateAuctionDto.Model ?? auction.Item.Model;
-        auction.Item.Color = updateAuctionDto.Color ?? auction.Item.Color;
-        auction.Item.Mileage = updateAuctionDto.Mileage ?? auction.Item.Mileage;
-        auction.Item.Year = updateAuctionDto.Year ?? auction.Item.Year;
+        auction.Item.Make = updateAuctionDto.Item.Make ?? auction.Item.Make;
+        auction.Item.Model = updateAuctionDto.Item.Model ?? auction.Item.Model;
+        auction.Item.Color = updateAuctionDto.Item.Color ?? auction.Item.Color;
+        auction.Item.Mileage = updateAuctionDto.Item.Mileage ?? auction.Item.Mileage;
+        auction.Item.Year = updateAuctionDto.Item.Year ?? auction.Item.Year;
 
         var result = await _auctionDbContext.SaveChangesAsync() > 0;
 
